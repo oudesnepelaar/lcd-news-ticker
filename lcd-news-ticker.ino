@@ -6,15 +6,15 @@
 #include <AutoConnect.h>
 
 ESP8266WebServer Server;
-AutoConnect      Portal(Server);
+AutoConnect Portal(Server);
 
-int const bufferSize = 8192;
-char myBuffer[bufferSize] = {"Welcome to the News Ticker :-) by Ferrie J Bank (c) 2021"};
-String payload;
+String payload = "Welcome to the News Ticker :-) by Ferrie J Bank (c) 2021";
 boolean bufferDirty = false;
 
 unsigned long lastReadTime = 0;
-unsigned long readTimeDelay = 600000; // refresh news every 10 minutes
+unsigned long readTimeDelay = 600000; // refresh news every 10 minutes (= 60 * 10 * 1000 ms)
+
+LiquidCrystal lcd(13, 15, 5, 4, 0, 2);
 
 void rootPage() {
   
@@ -25,6 +25,7 @@ void rootPage() {
 void setup () {
 
   delay(1000);
+
   Serial.begin(115200);
   Serial.println();
 
@@ -33,70 +34,44 @@ void setup () {
     Serial.println("WiFi connected: " + WiFi.localIP().toString());
   }
   
-//
-//  displayInit();
-//  
-//  WiFi.begin(ssid, password);
-//
-//  while (WiFi.status() != WL_CONNECTED) {
-//   
-//    delay(500);
-//  }
+  displayInit();
 }
 
 void displayInit() {
 
-//  P.begin();
-//  P.displayClear();
-//  P.displaySuspend(false);
-//  P.setIntensity(0);
-//
-//  P.displayScroll(myBuffer, scrollAlign, scrollEffect, scrollSpeed);
-//  
-//  while (!P.displayAnimate()) {yield();}
+  lcd.begin(16, 2);
+  lcd.print(payload);
 }
 
 
 void loop() {
 
   Portal.handleClient();
+  readNews();
   
-//  readNews();
-//  
-//  if (bufferDirty) {
-//
-//    bufferDirty = false;
-//
-//    MAX->clear();
-//    payload.toCharArray(myBuffer, bufferSize);
-//    P.displayReset();
-//  }
-//
-//  if (P.displayAnimate()) {
-//    P.displayReset();
-//  }
+  if (bufferDirty) {
+
+    bufferDirty = false;
+    lcd.print(payload);
+  }
 }
 
 void readNews() {
 
-//  unsigned long diff = millis() - lastReadTime;
-//  if ((lastReadTime > 0) && diff < readTimeDelay) return;
-//  
-//  lastReadTime = millis();
-//
-//  if (WiFi.status() == WL_CONNECTED) {
-//     
-//    HTTPClient http;
-//     
-//    http.begin("http://scrapert-env-1.eba-czz2mtaz.us-east-2.elasticbeanstalk.com/mix");
-//    int httpCode = http.GET();
-//     
-//    if (httpCode > 0) {
-//       
-//      payload = http.getString();
-//      bufferDirty = true;
-//    }
-//     
-//    http.end();
-//  }
+  unsigned long diff = millis() - lastReadTime;
+  if ((lastReadTime > 0) && diff < readTimeDelay) return;
+  
+  lastReadTime = millis();
+
+  HTTPClient http;
+  http.begin("http://scrapert-env-1.eba-czz2mtaz.us-east-2.elasticbeanstalk.com/mix");
+  
+  int httpCode = http.GET();
+  if (httpCode > 0) {
+    
+      payload = http.getString();
+      bufferDirty = true;
+  }
+  
+  http.end();
 }
