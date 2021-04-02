@@ -8,8 +8,10 @@
 ESP8266WebServer Server;
 AutoConnect Portal(Server);
 
-String payload = "Welcome to the News Ticker :-) by Ferrie J Bank (c) 2021";
+String payload = "01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 boolean bufferDirty = false;
+unsigned int displayCharIndex = 0;
+unsigned int delayms = 1000;
 
 unsigned long lastReadTime = 0;
 unsigned long readTimeDelay = 600000; // refresh news every 10 minutes (= 60 * 10 * 1000 ms)
@@ -40,6 +42,8 @@ void setup () {
 void displayInit() {
 
   lcd.begin(16, 2);
+  lcd.autoscroll();
+  lcd.setCursor(16, 1);
   lcd.print(payload);
 }
 
@@ -52,8 +56,27 @@ void loop() {
   if (bufferDirty) {
 
     bufferDirty = false;
+    displayCharIndex = 0;
+    
     lcd.print(payload);
   }
+
+  printNextChar();
+  delay(delayms);
+}
+
+void printNextChar() {
+
+  lcd.setCursor(16, 1); // lower row
+  lcd.print(payload.charAt(displayCharIndex));
+
+  if (displayCharIndex > 15) {
+    lcd.setCursor(16, 0); // upper row
+    lcd.print(payload.charAt(displayCharIndex - 16));
+  }
+
+  displayCharIndex++;
+  if (displayCharIndex == payload.length()) displayCharIndex = 0;
 }
 
 void readNews() {
